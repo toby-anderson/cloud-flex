@@ -53,11 +53,13 @@ func ExtractToken(ginc *gin.Context) string {
 	bearerToken := ginc.Request.Header.Get("Authorization")
 	if len(strings.Split(bearerToken, " ")) == 2 {
 		return strings.Split(bearerToken, " ")[1]
+	} else if len(strings.Split(bearerToken, " ")) == 1 {
+		return bearerToken
 	}
 	return ""
 }
 
-func ExtractTokenID(ginc *gin.Context) (uint, error) {
+func ExtractTokenID(ginc *gin.Context) (uuid.UUID, error) {
 
 	tokenString := ExtractToken(ginc)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -67,15 +69,15 @@ func ExtractTokenID(ginc *gin.Context) (uint, error) {
 		return []byte(os.Getenv("API_SECRET")), nil
 	})
 	if err != nil {
-		return 0, err
+		return uuid.NewV4(), err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		uid, err := strconv.ParseUint(fmt.Sprintf("%.0f", claims["user_id"]), 10, 32)
+		uid, err := uuid.FromString(claims["user_id"].(string))
 		if err != nil {
-			return 0, err
+			return uuid.NewV4(), err
 		}
-		return uint(uid), nil
+		return uid, nil
 	}
-	return 0, nil
+	return uuid.NewV4(), nil
 }

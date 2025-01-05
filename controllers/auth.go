@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/toby-anderson/cloud-flex/models"
+	"github.com/toby-anderson/cloud-flex/utils/token"
 	"net/http"
 )
 
@@ -40,7 +41,6 @@ type LoginInput struct {
 }
 
 func Login(ginc *gin.Context) {
-
 	var input LoginInput
 
 	if err := ginc.ShouldBindJSON(&input); err != nil {
@@ -56,5 +56,22 @@ func Login(ginc *gin.Context) {
 	}
 
 	ginc.JSON(http.StatusOK, gin.H{"token": token})
+}
 
+func CurrentUser(ginc *gin.Context) {
+	user_id, err := token.ExtractTokenID(ginc)
+
+	if err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := models.FindUser(user_id)
+
+	if err != nil {
+		ginc.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ginc.JSON(http.StatusOK, gin.H{"message": "success", "data": user.Username})
 }

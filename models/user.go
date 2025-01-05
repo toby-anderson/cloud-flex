@@ -1,18 +1,30 @@
 package models
 
 import (
+	"errors"
 	"html"
 	"strings"
 
+	"github.com/satori/go.uuid"
+	"github.com/toby-anderson/cloud-flex/utils/token"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"github.com/toby-anderson/cloud-flex/utils/token"
 )
 
 type User struct {
 	BaseModel
 	Username string `gorm:"not null;unique" json:"username"`
 	Password string `gorm:"not null;" json:"password"`
+}
+
+func FindUser(uid uuid.UUID) (User, error) {
+	var user User
+
+	if err := db.First(&user, uid).Error; err != nil {
+		return user, errors.New("User not found!")
+	}
+
+	return user, nil
 }
 
 func (self *User) Create() (*User, error) {
@@ -39,11 +51,11 @@ func (self *User) BeforeCreate(_ *gorm.DB) error {
 
 }
 
-func VerifyPassword(password,hashedPassword string) error {
+func VerifyPassword(password, hashedPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func LoginCheck(username string, password string) (string,error) {
+func LoginCheck(username string, password string) (string, error) {
 	var err error
 
 	user := User{}
