@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"github.com/toby-anderson/cloud-flex/utils/token"
 )
 
 type User struct {
@@ -36,4 +37,34 @@ func (self *User) BeforeCreate(_ *gorm.DB) error {
 
 	return nil
 
+}
+
+func VerifyPassword(password,hashedPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+}
+
+func LoginCheck(username string, password string) (string,error) {
+	var err error
+
+	user := User{}
+
+	err = db.Model(User{}).Where("username = ?", username).Take(&user).Error
+
+	if err != nil {
+		return "", err
+	}
+
+	err = VerifyPassword(password, user.Password)
+
+	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		return "", err
+	}
+
+	token, err := token.GenerateToken(user.ID)
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

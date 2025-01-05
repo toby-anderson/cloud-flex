@@ -9,9 +9,13 @@ import (
 func main() {
 	models.ConnectDataBase()
 	ginServe := gin.Default()
+
 	ginServe.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "The web server is running"})
 	})
+	
 	ginServe.POST("/register", controllers.Register)
+	ginServe.POST("/login", controllers.Login)
+
 	ginServe.Run(":8080")
 }
